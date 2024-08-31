@@ -45,21 +45,9 @@ RUN \
     && hg clone -r ${NGINX_VERSION:?}-${NGINX_RELEASE_SUFFIX:?} https://hg.nginx.org/pkg-oss/ \
     && popd
 
-FROM modules-builder-base AS modules-builder-1
-ARG NGINX_MODULES_SHARD_1
-RUN /scripts/build-nginx-modules.sh "${NGINX_MODULES_SHARD_1:?}"
-
-FROM modules-builder-base AS modules-builder-2
-ARG NGINX_MODULES_SHARD_2
-RUN /scripts/build-nginx-modules.sh "${NGINX_MODULES_SHARD_2:?}"
-
-FROM modules-builder-base AS modules-builder-3
-ARG NGINX_MODULES_SHARD_3
-RUN /scripts/build-nginx-modules.sh "${NGINX_MODULES_SHARD_3:?}"
-
-FROM modules-builder-base AS modules-builder-4
-ARG NGINX_MODULES_SHARD_4
-RUN /scripts/build-nginx-modules.sh "${NGINX_MODULES_SHARD_4:?}"
+FROM modules-builder-base AS modules-builder
+ARG NGINX_MODULES
+RUN /scripts/build-nginx-modules.sh "${NGINX_MODULES:?}"
 
 FROM modules-builder-base AS lua-modules-builder
 ARG NGINX_LUA_PROMETHEUS_VERSION
@@ -134,10 +122,7 @@ ARG NGINX_RELEASE_DISTRO
 # hadolint ignore=DL4006,SC3040
 RUN \
     --mount=type=bind,target=/nginx-pkg,from=nginx-pkg-builder,source=/nginx-pkg \
-    --mount=type=bind,target=/modules/shard1,from=modules-builder-1,source=/modules-build \
-    --mount=type=bind,target=/modules/shard2,from=modules-builder-2,source=/modules-build \
-    --mount=type=bind,target=/modules/shard3,from=modules-builder-3,source=/modules-build \
-    --mount=type=bind,target=/modules/shard4,from=modules-builder-4,source=/modules-build \
+    --mount=type=bind,target=/modules,from=modules-builder,source=/modules-build \
     --mount=type=bind,target=/lua-modules,from=lua-modules-builder,source=/lua-modules \
     --mount=type=bind,target=/configs,from=configs-and-scripts,source=/configs \
     --mount=type=bind,target=/scripts,from=configs-and-scripts,source=/scripts \
